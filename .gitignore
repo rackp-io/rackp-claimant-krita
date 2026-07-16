@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+
+# Krita scratch files from manual plugin testing
+tests/*.kra
+tests/*.kra~

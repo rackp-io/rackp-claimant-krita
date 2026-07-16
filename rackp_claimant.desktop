@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=rackp_claimant
+X-Krita-Manual=
+Name=RACKP Claimant
+Comment=RACK Protocol Claimant for Krita: anchors saved files to a Keeper and files assessments to a Referee
