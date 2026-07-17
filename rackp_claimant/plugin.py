@@ -64,9 +64,9 @@ class _Worker(QThread):
                 ok, msg, payload = self._fn()
             self.done.emit(ok, msg, payload)
         except DeliveryRejected as e:
-            self.done.emit(False, f"拒否: {e.reason}", None)
+            self.done.emit(False, f"Rejected: {e.reason}", None)
         except TransportError as e:
-            self.done.emit(False, f"通信失敗: {e}", None)
+            self.done.emit(False, f"Connection failed: {e}", None)
         except Exception as e:  # noqa: BLE001 — surface any failure to the dock
             self.done.emit(False, f"{type(e).__name__}: {e}", None)
 
@@ -101,14 +101,14 @@ class RACKPDock(DockWidget):
         status_row = QHBoxLayout()
         self._dot = QLabel("●")
         self._dot.setStyleSheet("color: gray; font-size: 14px;")
-        self._status = QLabel("待機中")
+        self._status = QLabel("Idle")
         status_row.addWidget(self._dot)
         status_row.addWidget(self._status)
         status_row.addStretch()
         layout.addLayout(status_row)
 
         layout.addWidget(QLabel("Terminal ID:"))
-        self._tid_value = QLineEdit(self._config.get("terminal_id") or "（未生成）")
+        self._tid_value = QLineEdit(self._config.get("terminal_id") or "(not generated yet)")
         self._tid_value.setReadOnly(True)
         self._tid_value.setStyleSheet("font-size: 9px;")
         layout.addWidget(self._tid_value)
@@ -118,13 +118,13 @@ class RACKPDock(DockWidget):
         self._keeper_url.editingFinished.connect(self._on_keeper_url_changed)
         layout.addWidget(self._keeper_url)
 
-        self._seq_label = QLabel(f"アンカー数: {self._config.get('sequence_number', 0)}")
+        self._seq_label = QLabel(f"Anchors: {self._config.get('sequence_number', 0)}")
         layout.addWidget(self._seq_label)
-        self._last_label = QLabel("最終アンカー: —")
+        self._last_label = QLabel("Last anchor: —")
         self._last_label.setWordWrap(True)
         layout.addWidget(self._last_label)
 
-        self._log_label = QLabel("ログ: —")
+        self._log_label = QLabel("Log: —")
         self._log_label.setStyleSheet("font-size: 9px;")
         self._log_label.setWordWrap(True)
         layout.addWidget(self._log_label)
@@ -134,17 +134,17 @@ class RACKPDock(DockWidget):
         sep.setStyleSheet("color: #555;")
         layout.addWidget(sep)
 
-        layout.addWidget(QLabel("査定"))
+        layout.addWidget(QLabel("Assessment"))
         layout.addWidget(QLabel("Referee:"))
         self._referee_url = QLineEdit(self._config.get("referee_url", ""))
         self._referee_url.editingFinished.connect(self._on_referee_url_changed)
         layout.addWidget(self._referee_url)
 
-        self._btn_new = QPushButton("新規査定依頼…")
+        self._btn_new = QPushButton("New assessment request…")
         self._btn_new.clicked.connect(self._on_new_assessment)
         layout.addWidget(self._btn_new)
 
-        layout.addWidget(QLabel("インシデント一覧:"))
+        layout.addWidget(QLabel("Incidents:"))
         self._incident_list = QListWidget()
         self._incident_list.setFixedHeight(100)
         self._incident_list.itemSelectionChanged.connect(self._on_incident_selected)
@@ -152,11 +152,11 @@ class RACKPDock(DockWidget):
         self._refresh_incident_list()
 
         btn_row = QHBoxLayout()
-        self._btn_poll = QPushButton("進捗を確認")
+        self._btn_poll = QPushButton("Check progress")
         self._btn_poll.clicked.connect(self._on_poll)
         btn_row.addWidget(self._btn_poll)
 
-        self._btn_cert = QPushButton("証明書を保存")
+        self._btn_cert = QPushButton("Save certificate")
         self._btn_cert.setEnabled(False)
         self._btn_cert.clicked.connect(self._on_save_certificate)
         btn_row.addWidget(self._btn_cert)
@@ -210,14 +210,14 @@ class RACKPDock(DockWidget):
         if dlg.exec_() != AssessmentDialog.Accepted:
             return
         actor_id, description, fp = dlg.actor_id(), dlg.description(), dlg.filepath()
-        real_fp = fp if fp and fp != "（未保存）" else None
+        real_fp = fp if fp and fp != "(unsaved)" else None
 
         def fn():
             incident_id = _get_app().file_assessment(description, real_fp, actor_id or None)
-            return True, f"査定依頼を送信しました: {incident_id[:8]}…", None
+            return True, f"Assessment request sent: {incident_id[:8]}…", None
 
         self._btn_new.setEnabled(False)
-        self._set_status(True, "査定依頼を送信中…")
+        self._set_status(True, "Sending assessment request…")
         _run(fn, self._on_assessment_done)
 
     def _on_assessment_done(self, ok, msg, _payload):
@@ -230,10 +230,10 @@ class RACKPDock(DockWidget):
     def _on_poll(self):
         def fn():
             notes = _get_app().poll()
-            return True, ("　".join(notes) if notes else "新しい通知はありません"), None
+            return True, (" / ".join(notes) if notes else "No new notifications"), None
 
         self._btn_poll.setEnabled(False)
-        self._set_status(True, "Keeper メールボックスを確認中…")
+        self._set_status(True, "Checking Keeper mailbox…")
         _run(fn, self._on_poll_done)
 
     def _on_poll_done(self, ok, msg, _payload):
@@ -268,7 +268,7 @@ class RACKPDock(DockWidget):
                 f"ai_ratio:    {prov.get('ai_ratio', '?')}\n"
                 f"confidence:  {prov.get('confidence_level', '?')}"
             )
-        QMessageBox.information(self, "査定結果", text)
+        QMessageBox.information(self, "Assessment result", text)
 
     # --- certificate: save the received result -----------------------------
 
@@ -278,10 +278,10 @@ class RACKPDock(DockWidget):
             return
         result = settings.load().get("incidents", {}).get(iid, {}).get("result")
         if not result:
-            self._set_status(False, "保存できる査定結果がありません")
+            self._set_status(False, "No assessment result available to save")
             return
         save_path, _ = QFileDialog.getSaveFileName(
-            self, "証明書の保存先", str(Path.home() / f"rackp_cert_{iid[:8]}.json"),
+            self, "Save certificate as", str(Path.home() / f"rackp_cert_{iid[:8]}.json"),
             "JSON Files (*.json);;All Files (*)",
         )
         if not save_path:
@@ -289,10 +289,10 @@ class RACKPDock(DockWidget):
         try:
             with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=2, ensure_ascii=False)
-            self._set_status(True, f"証明書を保存しました: {save_path}")
-            QMessageBox.information(self, "証明書", f"保存しました:\n{save_path}")
+            self._set_status(True, f"Certificate saved: {save_path}")
+            QMessageBox.information(self, "Certificate", f"Saved to:\n{save_path}")
         except Exception as e:  # noqa: BLE001
-            self._set_status(False, f"保存エラー: {e}")
+            self._set_status(False, f"Save error: {e}")
 
     # --- status ------------------------------------------------------------
 
@@ -300,12 +300,12 @@ class RACKPDock(DockWidget):
         self._dot.setStyleSheet(f'color: {"green" if ok else "red"}; font-size: 14px;')
         self._status.setText(msg)
         self._config = settings.load()
-        self._tid_value.setText(self._config.get("terminal_id") or "（未生成）")
-        self._seq_label.setText(f"アンカー数: {self._config.get('sequence_number', 0)}")
-        self._last_label.setText(f"最終: {msg}")
+        self._tid_value.setText(self._config.get("terminal_id") or "(not generated yet)")
+        self._seq_label.setText(f"Anchors: {self._config.get('sequence_number', 0)}")
+        self._last_label.setText(f"Last: {msg}")
 
     def set_log_path(self, path: str):
-        self._log_label.setText(f"ログ: {path}")
+        self._log_label.setText(f"Log: {path}")
 
     def canvasChanged(self, canvas):
         pass

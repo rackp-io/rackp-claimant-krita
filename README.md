@@ -49,12 +49,12 @@ imports cleanly for testing.
 `ASSESSMENT_REQUEST`, `EVIDENCE_SUBMISSION`, and `CONTRIBUTION_RESULT` are
 RFC-0001 messages, so this half is spec-stable regardless of Referee internals:
 
-1. **新規査定依頼** → files an `ASSESSMENT_REQUEST` to the Referee.
-2. **進捗を確認** → polls the Claimant's Keeper mailbox (a signed `MAILBOX_QUERY`)
+1. **New assessment request…** → files an `ASSESSMENT_REQUEST` to the Referee.
+2. **Check progress** → polls the Claimant's Keeper mailbox (a signed `MAILBOX_QUERY`)
    and reacts: on `EVIDENCE_QUERY_REQUEST` it submits the anchored file as
    `EVIDENCE_SUBMISSION`; on `CONTRIBUTION_RESULT` / `POH_CERTIFICATE` it stores
    the result.
-3. **証明書を保存** → writes the received result to disk.
+3. **Save certificate** → writes the received result to disk.
 
 The full loop — anchor, deposit, file, auto-submit evidence on
 `EVIDENCE_QUERY_REQUEST`, receive the `POH_CERTIFICATE`, and a silent re-poll

@@ -178,20 +178,20 @@ class ClaimantApp:
             inc = self.config.get("incidents", {}).get(incident_id) if incident_id else None
             if mtype == "EVIDENCE_QUERY_REQUEST" and inc:
                 self._submit_stored_evidence(incident_id, inc)
-                notes.append(f"{incident_id[:8]}…: 証拠を提出しました")
+                notes.append(f"{incident_id[:8]}…: evidence submitted")
             elif mtype == "CONTRIBUTION_RESULT" and inc:
                 inc["result"] = msg
                 status = (msg.get("assessment", {})
                           .get("evidence_sufficiency", {})
                           .get("assessment_status", "?"))
                 inc["status"] = f"ASSESSMENT ({status})"
-                notes.append(f"{incident_id[:8]}…: 査定結果を受領しました")
+                notes.append(f"{incident_id[:8]}…: assessment result received")
             elif mtype == "POH_CERTIFICATE":
                 # POH_CERTIFICATE carries no incident_id (RFC-0001 §8.4): it is
                 # matched by the certified subject and the awaiting PoHI filing.
                 got = self._match_pohi_incident(msg)
                 if got:
-                    notes.append(f"{got[:8]}…: 人間関与証明書を受領しました")
+                    notes.append(f"{got[:8]}…: PoHI certificate received")
         del processed[:-_PROCESSED_CAP]
         if latest != since:
             self.config["mailbox_since"] = latest
