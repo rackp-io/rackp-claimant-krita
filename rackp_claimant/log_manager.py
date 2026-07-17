@@ -1,7 +1,8 @@
 ﻿"""
 Session log manager for RACKP Claimant.
 Accumulates operation events locally, computes a rolling hash for anchoring.
-Logs are stored as JSON Lines in ~/.rackp/logs/<session_id>.jsonl
+Logs are stored as JSON Lines in $RACKP_HOME/logs/<session_id>.jsonl
+(default ~/.rackp/logs/).
 """
 import hashlib
 import json
@@ -9,7 +10,11 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-_LOG_DIR = Path.home() / '.rackp' / 'logs'
+from . import settings
+
+
+def _log_dir() -> Path:
+    return settings.home() / 'logs'
 
 
 def _now() -> str:
@@ -20,8 +25,9 @@ class SessionLog:
     def __init__(self, terminal_id: str):
         self.session_id = str(uuid.uuid4())
         self.terminal_id = terminal_id
-        _LOG_DIR.mkdir(parents=True, exist_ok=True)
-        self._path = _LOG_DIR / f'{self.session_id}.jsonl'
+        log_dir = _log_dir()
+        log_dir.mkdir(parents=True, exist_ok=True)
+        self._path = log_dir / f'{self.session_id}.jsonl'
         self._last_hash: str | None = None
         self._append({'event': 'session_start', 'terminal_id': terminal_id})
 

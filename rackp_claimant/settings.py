@@ -31,8 +31,12 @@ import os
 from pathlib import Path
 
 
-def _home() -> Path:
+def home() -> Path:
+    """Profile directory: $RACKP_HOME, or ~/.rackp by default."""
     return Path(os.environ.get("RACKP_HOME", str(Path.home() / ".rackp")))
+
+
+_home = home  # internal alias
 
 
 _IDENTITY_KEYS = (
