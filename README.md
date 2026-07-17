@@ -120,8 +120,12 @@ leg, so allow ~10-15 minutes end to end.
 
 ## Setup
 
-1. Run `install_plugin.bat` (Windows), or copy `rackp_claimant/` and
-   `rackp_claimant.desktop` into Krita's `pykrita` folder.
+1. Run the installer for your platform — `install_plugin.bat` (Windows) or
+   `sh install_plugin.sh` (Linux / macOS) — or copy `rackp_claimant/` and
+   `rackp_claimant.desktop` into Krita's `pykrita` folder manually:
+   - Windows: `%APPDATA%\krita\pykrita`
+   - Linux: `~/.local/share/krita/pykrita`
+   - macOS: `~/Library/Application Support/krita/pykrita`
 2. Enable the plugin in Krita → Settings → Python Plugin Manager → RACKP Claimant.
 3. Configure the Keeper and Referee URLs in the RACKP Claimant dock.
 
