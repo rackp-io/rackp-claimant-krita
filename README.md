@@ -67,7 +67,7 @@ as a production deployment smoke.
 ### Base64 payload approach
 
 The full file content is embedded as base64 in the `EVIDENCE_SUBMISSION` payload
-and cached in the local settings file at save time. This is impractical for
+and cached in a local anchor-cache file (`anchors.json`) at save time. This is impractical for
 large files (KRA files are ZIP-based and can exceed tens of MB; base64 inflates
 by ~33%). It exists solely because Krita's Python addon API does not expose
 stroke-level or node-level operation logs — the ideal provenance source. A
