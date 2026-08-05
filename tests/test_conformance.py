@@ -116,7 +116,7 @@ c = Claimant(identity, KC, transport)
 # Phase 1: session + anchoring
 norms = [{
     "norm_profile_id": "rackp.standard.v1",
-    "norm_fetch_url": "https://raw.githubusercontent.com/rackp-io/rackp/main/norms/rackp-standard-v1.json",
+    "norm_fetch_url": "https://rackp.io/norms/rackp-standard-v1.json",
 }]
 session_rec = c.start_session(norms)
 session_msg = transport.keeper(KC).anchors[identity.terminal_id][0]

@@ -54,9 +54,31 @@ def run(keeper_url, live):
     assert app2.terminal_id == tid
     ok("identity persists across ClaimantApp rebuilds")
 
+    # Norm Profile fetch (RFC-0001 §9.3): session_start fetches the declared
+    # norm_fetch_url and caches the profile under RACKP_HOME. A file:// URL
+    # keeps the test offline; an unreachable URL must warn, not raise.
+    import json as _json
+    import pathlib
+    import warnings as _warnings
+    profile_src = pathlib.Path(_TMP) / "served_profile.json"
+    profile_src.write_text(_json.dumps({"profile_id": app2.config["norm_profile_id"]}))
+    app2.config["norm_fetch_url"] = profile_src.as_uri()
+
     app2.session_start()
     assert app2.claimant.anchors._seq == 1 and app2.config["registered"]
     ok("session_start anchors SESSION_START (seq 1) and records registration")
+
+    cached = pathlib.Path(_TMP) / "norm_profile.json"
+    assert cached.exists() and _json.loads(cached.read_text())["profile_id"] == app2.config["norm_profile_id"]
+    ok("session_start fetches and caches the declared Norm Profile (RFC-0001 S9.3)")
+
+    app2.config["norm_fetch_url"] = "file:///nonexistent/norm_profile.json"
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
+        app2._refresh_norm_profile()
+    assert any("fetch failed" in str(w.message) for w in caught)
+    assert cached.exists(), "a failed fetch must leave the last cached copy in place"
+    ok("unreachable norm_fetch_url warns and keeps the cached copy (offline-safe)")
 
     # Anchor a saved file: payload is {"file_base64": ...}, cached for evidence.
     f = os.path.join(_TMP, "art.kra")

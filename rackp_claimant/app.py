@@ -15,7 +15,11 @@ the Referee reference rewrite for live end-to-end testing.
 """
 import base64
 import hashlib
+import json
 import os
+import urllib.error
+import urllib.request
+import warnings
 
 from . import settings
 from .identity import TerminalIdentity, b64url_encode, b64url_decode
@@ -67,9 +71,39 @@ class ClaimantApp:
             "norm_fetch_url": self.config["norm_fetch_url"],
         }]
 
+    def _refresh_norm_profile(self):
+        """Fetch the declared Norm Profile at session start (RFC-0001 §9.3).
+
+        STD-009 requires norm_fetch_url to be the endpoint the profile was
+        actually fetched from, so the fetch happens before the SESSION_START
+        anchor that declares it. The fetched copy is cached under RACKP_HOME
+        for post-hoc reference. Failure never blocks the session: offline
+        anchoring must keep working, and the last cached copy stands in.
+        """
+        url = self.config["norm_fetch_url"]
+        try:
+            with urllib.request.urlopen(url, timeout=5) as resp:
+                raw = resp.read()
+            profile = json.loads(raw)
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            warnings.warn(f"Norm Profile fetch failed ({url}): {exc}; "
+                          "proceeding with the last cached copy if any")
+            return
+        if profile.get("profile_id") != self.config["norm_profile_id"]:
+            warnings.warn(
+                f"Norm Profile at {url} has profile_id "
+                f"{profile.get('profile_id')!r}, expected "
+                f"{self.config['norm_profile_id']!r}; not caching")
+            return
+        cache = settings.home() / "norm_profile.json"
+        tmp = cache.with_suffix(".json.tmp")
+        tmp.write_bytes(raw)
+        os.replace(tmp, cache)
+
     # --- Phase 1: anchoring -------------------------------------------------
 
     def session_start(self) -> AnchorRecord:
+        self._refresh_norm_profile()
         rec = self.claimant.start_session(self.norm_profiles())
         self._persist_chain()
         return rec
