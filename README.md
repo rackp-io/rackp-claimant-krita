@@ -5,7 +5,7 @@ during normal operation, and files assessments / submits evidence to a Referee
 when the user requests one.
 
 Implements [RFC-0001](https://github.com/rackp-io/rackp/blob/main/docs/RFC-0001.md) /
-[RFC-0002](https://github.com/rackp-io/rackp/blob/main/docs/RFC-0002.md), spec version **0.2.0-alpha**.
+[RFC-0002](https://github.com/rackp-io/rackp/blob/main/docs/RFC-0002.md), spec version **0.3.0-alpha**.
 
 ## What it does
 

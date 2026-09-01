@@ -141,7 +141,11 @@ write("claim_anchor.json", {
 contribution_result_without_proof_hash = {
     "type": "CONTRIBUTION_RESULT",
     "network": "TESTNET",
-    "rackp_version": "0.2.0-alpha",
+    # Fixed and fictional, like the other example values here (rackp.example URLs,
+    # sequential UUIDs) -- never a real tag, so this vector needs no regeneration
+    # when the spec version actually changes. What it exercises is the exclusion
+    # rule, not a sample of a real message from any particular version.
+    "rackp_version": "0.0.0-example",
     "incident_id": "44444444-4444-4444-8444-444444444444",
     "referee_id": "55555555-5555-4555-8555-555555555555",
     "referee_reputation_snapshot": {
@@ -177,10 +181,15 @@ contribution_result_without_proof_hash = {
             "claimant_provenance": {"human_ratio": 0.1, "ai_ratio": 0.9},
             "confidence_level": "HIGH",
         },
-        # String array is the pre-rackp#15 shape (CONTRIBUTION_RESULT.norms_used has
-        # nowhere yet to carry a document hash on the fault side). Regenerate this
-        # vector if rackp#15 gives it POH_CERTIFICATE's {profile_id, ...} shape.
-        "norms_used": ["rackp.standard.v1"],
+        # Same shape POH_CERTIFICATE.norms_used uses (rackp#15): one entry per
+        # applied profile, carrying the hash of the document actually applied.
+        "norms_used": [
+            {
+                "profile_id": "rackp.standard.v1",
+                "applied_document_hash": "c" * 64,
+                "declared_document_hash": "d" * 64,
+            }
+        ],
         "detailed_report": {
             "report_url": "https://rackp.example/reports/44444444-4444-4444-8444-444444444444",
             "report_hash": "a" * 64,
@@ -211,7 +220,7 @@ contribution_result["signature"] = contribution_result_signature
 # every other signed message in this protocol, unlike CONTRIBUTION_RESULT's.
 poh_certificate_without_proof_hash = {
     "type": "POH_CERTIFICATE",
-    "rackp_version": "0.2.0-alpha",
+    "rackp_version": "0.0.0-example",  # fixed and fictional; see the note above
     "cert_id": "66666666-6666-4666-8666-666666666666",
     "issue_date": "2026-01-01T00:00:00Z",
     "referee_id": "55555555-5555-4555-8555-555555555555",
